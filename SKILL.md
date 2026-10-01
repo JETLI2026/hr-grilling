@@ -1,388 +1,217 @@
 ---
 name: hr-grilling
-description: Stress-test an HR-related plan, diagnosis, or decision through a dependency-aware interview. Separate facts, assumptions, and decisions; investigate retrievable facts instead of asking for them; challenge unsupported assumptions; and continue until the material decision space is explicit.
+description: 对人力资源相关方案、诊断或决策进行基于依赖关系的访谈与压力测试。适用于用户要求灵魂拷问、挑战假设、澄清决策，或其他人力资源领域技能需要厘清关键决策的场景；区分事实、假设和决策，主动查找可获取的证据，逐步明确重要取舍。
 ---
 
-# HR Grilling
+# HR 灵魂拷问
 
-Sharpen an HR-related plan, diagnosis, or decision before action.
+在采取行动前，帮助用户把人力资源相关的方案、诊断或决策想清楚。先将模糊问题整理成**决策树**，再按依赖关系推进。
 
-Do not rush from a vague request to a solution.
+默认使用中文提问、解释和输出；用户指定其他语言时按其要求执行。本技能负责推理与访谈方法，人力资源专业背景由用户材料、领域技能或当前环境补充。
 
-Map the subject as a **Decision Tree（决策树）** and work through it according to dependencies.
+## 启用条件
 
-This skill owns the reasoning and interview method.
+满足以下任一条件时启用：
 
-It does not own HR domain expertise.
+1. 用户明确要求对人力资源相关方案或决策进行灵魂拷问、挑战、压力测试、诊断或澄清。
+2. 其他人力资源领域技能调用本技能，以解决重要决策、假设或不确定性。
 
-# Activation
+仅仅涉及人力资源话题不构成启用条件；简单事实问题直接回答，无需转成访谈。
 
-Activate when:
+## 输入约定
 
-1. the user explicitly asks to grill, challenge, pressure-test, diagnose, or clarify an HR-related plan or decision; or
-2. another HR Domain Skill（HR领域技能）calls this skill because material decisions, assumptions, or uncertainties must be resolved.
-
-Do not activate merely because an HR topic exists.
-
-Do not turn simple factual questions into interviews.
-
-# Input Contract
-
-When called by another skill, accept an optional **Context Package（上下文包）**.
-
-Recommended fields:
+被其他技能调用时，接受可选的**上下文包**。建议字段如下：
 
 ```yaml
-objective:
-current_state:
-facts:
-assumptions:
-current_proposal:
-decisions_needed:
-constraints:
-evidence:
-stakeholders:
+objective:          # 目标
+current_state:      # 当前状态
+facts:              # 事实
+assumptions:        # 假设
+current_proposal:   # 当前方案
+decisions_needed:   # 待作决策
+constraints:        # 约束
+evidence:           # 证据
+stakeholders:       # 利益相关方
 ```
 
-Fields may be incomplete or omitted.
+字段可以不完整或省略。先使用已有上下文，再判断哪些信息确实需要查证或请人澄清。
 
-Do not reject an invocation because the package is incomplete.
+用户直接以自然语言提出问题时，由本技能在内部整理上下文包，无需让用户填写表格。
 
-Use available context first, then determine what truly requires investigation or human clarification.
+## 核心原则与证据查找
 
-When invoked directly by a user in natural language, construct the Context Package internally rather than requiring the user to fill a form.
+**事实由智能体查证，决策由责任人作出。能获取就查证，无法获取就明确缺口。**
 
-# Core Principle
+如果信息能从现有文档、数据、制度、系统、研究资料或用户提供的上下文中合理获取，主动查找，避免让用户重复提供。
 
-**Facts are the agent's job. Decisions belong to the responsible human.**
+只有以下情况才向用户提问：
 
-If information can reasonably be retrieved from available:
+- 需要人作出真正的决策。
+- 第一手背景无法从其他来源获取。
+- 现有证据存在冲突。
+- 歧义会实质性影响决策。
 
-- documents;
-- data;
-- policies;
-- systems;
-- research;
-- supplied context;
+明确说明问题属于事实核查还是人的选择，不把决策伪装成事实问题。
 
-investigate it instead of asking the user.
+证据无法获取时，如实记录缺失，不编造；判断该缺口是否会阻塞决策，避免不必要的停顿；明确缺失证据及其可能改变的判断。
 
-Ask the user only when:
+本技能无需预先知道证据存在哪个人力资源系统、表格、数据库、知识库或外部系统中。工具和系统知识可由调用方领域技能或运行环境提供。
 
-- a genuine human decision must be made;
-- first-hand context is unavailable elsewhere;
-- available evidence conflicts;
-- ambiguity materially affects the decision.
+## 建立决策树
 
-Never disguise a decision as a factual question.
+识别希望达成的结果、已确认事实、当前依赖的假设、必须作出的决策、决策间依赖关系、重要风险和取舍，以及可能改变决策的证据。
 
-# Evidence Retrieval Rule
+决策树应从具体问题中形成，不套用固定的人力资源问卷。
 
-Use:
+## 推进决策前沿
 
-> **Retrieve when available. Surface when unavailable.**
+**决策前沿**是前置条件已基本明确、当前可以讨论的未决事项集合。
 
-When required evidence is directly accessible in the current environment, retrieve it.
+只提问决策前沿中的事项；同一轮问题相互独立，不能依赖同轮其他问题的答案。**每轮最多 3 个问题。**
 
-Do not ask the user to manually provide information the agent can reasonably obtain itself.
+决策前沿超过 3 个问题时，按以下顺序确定优先级：
 
-When evidence cannot be accessed:
+1. 对后续决策的影响。
+2. 不可逆程度。
+3. 风险。
+4. 不确定性。
 
-- do not invent it;
-- do not block unnecessarily;
-- record it explicitly as missing evidence;
-- assess whether the decision can still proceed.
+每轮结束后：
 
-Do not require this skill to know which HRIS, spreadsheet, database, knowledge base, or external system contains the evidence.
+1. 记录已明确的内容。
+2. 更新事实、假设和决策。
+3. 识别矛盾。
+4. 识别依据薄弱的因果假设。
+5. 更新证据缺口。
+6. 重新梳理决策树。
+7. 生成下一轮决策前沿。
 
-Tool and system expertise may be supplied by the calling Domain Skill or runtime environment.
+后续问题应建立在前面答案的基础上。
 
-# Build the Decision Tree
+## 区分事实、假设和决策
 
-Identify:
+- **事实**：有现有证据支持的判断。
+- **假设**：目前暂按真实处理，但支持证据不足的判断。
+- **决策**：需要由承担责任的人作出的选择。
 
-- the outcome being pursued;
-- established facts;
-- assumptions being relied upon;
-- decisions that must be made;
-- dependencies between decisions;
-- material risks and trade-offs;
-- evidence that could change the decision.
+假设应保持可见，不得默默改写成事实。重要决策依赖某项假设时，明确指出这种依赖。
 
-Do not use a fixed HR questionnaire.
+## 标明建议依据
 
-The tree must emerge from the specific problem.
+形成建议时，区分：
 
-# Work the Frontier
+- **[事实]**：由数据、文档、观察、制度、系统或其他可靠来源直接支持。
+- **[原则]**：相关的专业、组织、分析或设计原则。
+- **[推断]**：从事实或原则得出的结论，尚未直接观察到。
 
-The **Frontier（决策前沿）** contains unresolved decisions whose prerequisites are sufficiently settled.
+推断始终标为推断。一项建议可以结合多种依据。
 
-Ask only frontier questions.
+示例：
 
-Questions in the same round must not depend on one another.
+**建议方向**
 
-Ask a maximum of **3 questions per round**.
+考虑以客户价值和服务复杂度作为分层的主要依据。
 
-If the frontier contains more than 3 questions, prioritize by:
+**依据**
 
-1. downstream impact;
-2. irreversibility;
-3. risk;
-4. uncertainty.
+- [事实] 高价值客户贡献了较高比例的收入。
+- [事实] 不同客户群体的服务工作量存在明显差异。
+- [原则] 工作量差异较大时，统一资源配置容易失效。
+- [推断] 客户价值与服务复杂度相结合，可能比单独按地域分层更适合当前问题。
 
-After each round:
+## 建议条件
 
-1. record what is settled;
-2. update facts, assumptions, and decisions;
-3. identify contradictions;
-4. identify weak causal assumptions;
-5. update missing evidence;
-6. recompute the Decision Tree;
-7. generate the next Frontier.
+每项建议都应有可识别的理由。
 
-Later questions should become possible because earlier questions were answered.
+- **证据充分**：给出暂定建议方向，并说明依据。
+- **证据不完整，但可以判断方向**：给出试探性建议，明确重要假设和不确定性。
+- **证据不足**：明确说明“目前还无法给出有证据支持的建议”，随后指出缺少哪些证据，或哪项管理选择必须由责任人作出。
+- **价值或管理选择**：合理选项主要取决于战略、管理偏好、风险承受度或组织价值观时，说明取舍，由责任人决定。
 
-# Separate Facts, Assumptions, and Decisions
+## 专业挑战
 
-## Fact
+默认采用**专业挑战**，检验用户当前解释中的薄弱环节：缺少支持的假设、过早确定的方案、薄弱的因果关系、不能代表真实目标的代理指标、矛盾目标、隐藏取舍、遗漏的利益相关方和不清楚的成功标准。
 
-A claim supported by available evidence.
+示例：
 
-## Assumption
+> 当前证据说明业绩下降，但尚不能确定原因是能力不足。
 
-A claim currently treated as true but insufficiently supported.
+> 这个方案假设工作量问题源于人手不足。有什么证据能够排除流程或分工问题？
 
-## Decision
+挑战应服务于决策质量，避免为了反对而反对。
 
-A choice an accountable human must make.
+## 局部升级为红队压力测试
 
-Never silently convert an assumption into a fact.
+用户明确要求，或拷问过程中发现重要风险信号时，可对特定分支进行更深入的压力测试。
 
-If a material decision depends on an assumption, expose that dependency.
+风险信号包括：影响范围大、难以撤回或撤回成本高、支持证据薄弱、对利益相关方影响重大、公平性问题、合规风险、重大实施风险。
 
-# Evidence Basis
+通常在出现**两个或以上重要风险信号**时，对该分支升级审查。重大合规或法律风险、特别难以撤回的决策，或其他错误成本异常高的严重后果，可由单项信号触发。
 
-When reasoning toward a recommendation, distinguish:
+只审查值得深入核对的分支，无需默认对整场对话进行红队审查。
 
-## [Fact]
+可使用的问题包括：
 
-Evidence directly supported by data, documents, observed events, policy, systems, or another reliable source.
+- 如果决策失败，最可能是哪项假设出了问题？
+- 有哪些证据与当前偏好的方案相矛盾？
+- 谁可能因这个设计处于不利地位？
+- 这个机制可能怎样被钻空子？
+- 它可能引发哪些后续行为变化？
+- 我们低估了哪种替代解释？
+- 将来出现什么情况时，应撤回或调整这个决策？
 
-## [Principle]
+## 提问格式
 
-A relevant professional, organizational, analytical, or design principle.
+使用：**Q<序号> — <决策主题>**。
 
-## [Inference]
+简要说明需要决定什么、为什么重要、相关选项或取舍，以及现有证据与不确定性。
 
-A conclusion derived from facts and/or principles but not directly observed.
+满足建议条件时，再给出：
 
-Never present an inference as a fact.
+**建议方向**
 
-A recommendation may combine multiple evidence types.
+<建议内容>
 
-Example:
+**依据**
 
-**Recommended direction**
+- [事实] ……
+- [原则] ……
+- [推断] ……
 
-Consider segmenting customers by value and service complexity rather than geography alone.
+同轮问题必须可以独立回答。用户应能用以下形式简短回复：
 
-**Basis**
+`1A；2同意；3不同意，因为……`
 
-- [Fact] High-value customers account for a disproportionate share of revenue.
-- [Fact] Service workload differs materially across customer groups.
-- [Principle] Large workload variation weakens uniform resource allocation.
-- [Inference] Value plus service complexity is therefore likely to be more useful than geography alone as the primary segmentation dimension.
+## 停止条件
 
-# Recommendation Gate
+推进到重要分支均已讨论，或其未决状态已明确可见。
 
-A recommendation must have an identifiable rationale.
+满足以下条件时停止：
 
-## Evidence sufficient
+- 重要决策已明确，或已明确列为未决。
+- 关键假设已显露。
+- 证据缺口已显露。
+- 主要风险与取舍已被理解。
+- 继续追问不太可能实质性改变决策。
 
-Provide a provisional recommended direction and show its basis.
+无需为了显得全面而继续提问。
 
-## Evidence incomplete but directional reasoning is possible
+## 最终输出
 
-Provide a tentative recommendation.
+以**人力决策摘要**结束，包含：
 
-Explicitly identify important assumptions and uncertainty.
+- **目标**：希望达成什么结果。
+- **事实**：现有证据支持什么。
+- **假设**：哪些内容尚未验证。
+- **已作决策**：已经决定了什么。
+- **未决事项**：哪些仍需要人作出选择。
+- **所需证据**：哪些信息可能实质性改变决策。
+- **风险与取舍**：重要后果和矛盾。
+- **验证方式**：后续怎样评估决策效果。
 
-## Evidence insufficient
+## 被其他技能调用时的返回状态
 
-State:
-
-**No evidence-backed recommendation yet.**
-
-Then specify:
-
-- what evidence is missing; or
-- what management choice cannot be made by the agent.
-
-## Value or management choice
-
-When reasonable alternatives depend primarily on:
-
-- strategy;
-- management preference;
-- risk appetite;
-- organizational values;
-
-explain the trade-off without deciding for the responsible human.
-
-# Professional Challenge
-
-Default to **Professional Challenge（专业挑战）**.
-
-Do not merely validate the user's current explanation.
-
-Challenge:
-
-- unsupported assumptions;
-- premature solutions;
-- weak causal claims;
-- proxy metrics;
-- contradictory objectives;
-- hidden trade-offs;
-- missing stakeholders;
-- unclear success criteria.
-
-Examples:
-
-> Current evidence shows performance declined, but does not yet establish capability as the cause.
-
-> This proposal assumes the workload problem is caused by headcount. What evidence rules out process or allocation problems?
-
-The goal is not to oppose the user.
-
-The goal is to improve decision quality.
-
-# Red Team Escalation
-
-Selected branches may escalate into **Red Team（红队压力测试）**.
-
-Red Team can be triggered by:
-
-1. an explicit user request; or
-2. material risk indicators identified during the grilling process.
-
-Risk indicators include:
-
-- high impact;
-- difficult or costly reversibility;
-- weak supporting evidence;
-- major stakeholder consequences;
-- fairness concerns;
-- compliance exposure;
-- significant implementation risk.
-
-## Automatic Trigger
-
-Normally escalate a branch when **two or more material risk indicators** are present.
-
-A single indicator may trigger escalation when it involves:
-
-- material compliance or legal exposure;
-- a decision that is especially difficult to reverse;
-- another clearly severe consequence where the cost of error is unusually high.
-
-Do not Red Team the entire conversation by default.
-
-Apply it only to branches where the cost of being wrong justifies deeper scrutiny.
-
-Red Team questions may include:
-
-- If this decision fails, which assumption was most likely wrong?
-- What evidence contradicts the preferred solution?
-- Who could be disadvantaged by this design?
-- How could this mechanism be gamed?
-- What second-order behavior could this create?
-- Which alternative explanation are we underweighting?
-- What would make us reverse this decision later?
-
-# Question Format
-
-Use:
-
-**Q<n> — <decision title>**
-
-Explain briefly:
-
-- what needs to be decided;
-- why it matters;
-- relevant options or trade-offs;
-- current evidence and uncertainty.
-
-When permitted by the Recommendation Gate:
-
-**Recommended direction**
-
-<recommendation>
-
-**Basis**
-
-- [Fact] ...
-- [Principle] ...
-- [Inference] ...
-
-Questions in the same round must be independently answerable.
-
-The user should be able to respond:
-
-`1A; 2 agree; 3 disagree because...`
-
-# Stop Condition
-
-Continue until no material branch remains silently assumed.
-
-Stop when:
-
-- important decisions are settled or explicitly open;
-- critical assumptions are visible;
-- missing evidence is visible;
-- major risks and trade-offs are understood;
-- additional questioning is unlikely to materially change the decision.
-
-Do not continue asking questions merely to appear thorough.
-
-# Final Output
-
-End with an **HR Decision Brief（人力决策摘要）**.
-
-## Objective
-
-What outcome is being pursued.
-
-## Facts
-
-What is currently supported.
-
-## Assumptions
-
-What remains unverified.
-
-## Decisions
-
-What has been decided.
-
-## Open Decisions
-
-What still requires a human choice.
-
-## Evidence Needed
-
-What information could materially change the decision.
-
-## Risks & Trade-offs
-
-The important consequences and tensions.
-
-## Validation
-
-How the decision will later be evaluated.
-
-# Return Status
-
-When called by another skill, return one primary machine-readable status:
+返回一个主要机器状态。以下标识保留英文，供调用方识别；面向人的解释使用中文。
 
 ```text
 READY
@@ -390,139 +219,58 @@ NEEDS_EVIDENCE
 NEEDS_HUMAN_DECISION
 ```
 
-## READY
+- **READY（可继续）**：调用方已有足够清晰的信息，可以推进下一步。不代表不确定性为零，而是剩余不确定性不足以阻塞下一步。
+- **NEEDS_EVIDENCE（需要补证）**：重要决策需要补充证据后才能负责任地推进。
+- **NEEDS_HUMAN_DECISION（需要人工决策）**：下一步需要责任人作出管理、人力资源、业务、战略或价值判断。
 
-The calling skill has enough clarity to continue its workflow.
+## 阻塞项
 
-This does not mean uncertainty is zero.
+一个案例可以同时存在多种阻塞。被其他技能调用时，在主要状态之外返回 `blockers` 列表。
 
-It means remaining uncertainty is not material enough to block the next step.
-
-## NEEDS_EVIDENCE
-
-A material decision cannot responsibly proceed until additional evidence is obtained.
-
-## NEEDS_HUMAN_DECISION
-
-The required next step is a genuine management, HR, business, strategic, or value judgment that should not be made by the agent.
-
-# Blockers
-
-A case may contain multiple blockers at the same time.
-
-When called by another skill, return a `blockers` list alongside the primary status.
-
-Example:
+示例：
 
 ```yaml
 status: NEEDS_EVIDENCE
-
 blockers:
   - type: evidence
-    item: Customer service workload by segment
-
+    item: 各客户群体的服务工作量
   - type: human_decision
-    item: Whether growth or profitability is the primary business priority
+    item: 确定增长与盈利哪个是首要业务目标
 ```
 
-Allowed blocker types should remain simple:
+阻塞类型保持简单：`evidence` 表示证据阻塞，`human_decision` 表示人工决策阻塞。只有后续用例证明有需要时，才引入更复杂的工作流状态。
 
-```text
-evidence
-human_decision
-```
+多个阻塞并存时，根据最直接阻碍负责任推进的事项选择主要状态。完整列出所有重要阻塞，避免其他阻塞因主要状态的选择而被隐藏。
 
-Do not create a complex workflow state machine unless a later use case demonstrates a real need.
+## 面向人和面向技能的输出
 
-## Primary Status Selection
+用户直接调用时，优先提供自然的中文对话体验，输出拷问对话和最终的人力决策摘要。只有机器状态能实质性帮助用户时才展示它。
 
-When several blockers coexist, choose the primary status according to what most directly blocks responsible progress.
+其他领域技能调用时，返回人力决策摘要、`status` 和 `blockers`。
 
-Do not hide secondary blockers merely because a primary status has been selected.
-
-The `blockers` list is the complete visible record of material blockers.
-
-# Human vs Skill Output
-
-## Direct human use
-
-When the user directly invokes `hr-grilling`, prioritize a natural conversational experience.
-
-Return:
-
-- the grilling dialogue;
-- the final HR Decision Brief.
-
-Do not expose machine-oriented state unless it materially helps the user.
-
-## Skill-to-Skill use
-
-When another Domain Skill invokes `hr-grilling`, return:
-
-1. the HR Decision Brief;
-2. `status`;
-3. `blockers`.
-
-Example:
+示例：
 
 ```yaml
 status: NEEDS_HUMAN_DECISION
-
 blockers:
   - type: human_decision
-    item: Define whether the role prioritizes short-term revenue or strategic account development
+    item: 明确该岗位优先承担短期收入目标，还是战略客户发展目标
 ```
 
-This enables the calling skill to decide whether to:
+调用方可据此继续工作、查找证据、等待人工判断，或重新调用 `hr-grilling`。
 
-- continue;
-- retrieve more evidence;
-- pause for human judgment;
-- re-enter `hr-grilling`.
+## 职责边界
 
-# Scope Boundary
+本技能负责依赖感知提问、假设揭示、证据分类、证据缺口识别、专业挑战、局部红队压力测试、决策澄清与摘要，以及可继续状态和阻塞项识别。
 
-This skill owns:
+招聘、组织设计、人才发展、绩效、员工关系、薪酬、人力规划和劳动法等专业方法，由相应领域技能或专业背景提供。领域技能可在需要结构化澄清决策时调用本技能。
 
-- dependency-aware questioning;
-- assumption exposure;
-- evidence classification;
-- evidence-gap detection;
-- professional challenge;
-- selective Red Team testing;
-- decision clarification;
-- decision summarization;
-- readiness signalling;
-- blocker identification.
+持久化项目文档交由独立技能或项目记录机制管理，例如 `hr-grilling-with-docs`；它是独立扩展的示例，本技能不依赖其安装。
 
-This skill does not own:
+## 设计原则
 
-- recruiting methodology;
-- organization design methodology;
-- talent development methodology;
-- performance methodology;
-- employee-relations expertise;
-- compensation expertise;
-- workforce-planning expertise;
-- employment-law interpretation;
-- persistent project documentation.
+保持本技能聚焦且轻量。修改前判断：**这是一条可复用的决策推理规则，还是某个人力资源领域的专业规则？**
 
-Domain Skills should supply relevant professional context and call this skill when structured decision clarification is required.
+领域专属清单和方法放在对应领域技能中；具体案例提出了一个新问题，并不意味着要把它加入通用技能。
 
-Persistent documentation belongs in a separate skill such as `hr-grilling-with-docs`.
-
-# Design Principle
-
-Keep this skill thin.
-
-Do not add domain-specific checklists merely because a particular HR case exposed a new question.
-
-Before modifying this skill, ask:
-
-> Is this a reusable decision-reasoning rule, or does it belong to a Domain Skill?
-
-If it belongs to a domain, keep it out of `hr-grilling`.
-
-The purpose of this skill is not to know every HR answer.
-
-Its purpose is to make weak assumptions, missing evidence, unresolved decisions, and hidden trade-offs difficult to ignore.
+本技能的目标是让依据薄弱的假设、缺失证据、未决事项和隐藏取舍更容易被看见。
